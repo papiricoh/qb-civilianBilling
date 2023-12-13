@@ -43,6 +43,22 @@ QBCore.Functions.CreateCallback('qb-civilianBilling:Server:checkPay', function(s
     end
 end)
 
+QBCore.Functions.CreateCallback('qb-civilianBilling:Server:getPlayer', function(source, cb, data)
+    local src = source
+    local Player = QBCore.Functions.GetPlayer(data)
+    if Player then
+        local charInfo = Player.PlayerData.charinfo
+        local data = {
+            citizenid = Player.PlayerData.citizenid,
+            first_name = charInfo.firstname,
+            last_name = charInfo.lastname
+        }
+        cb(data)
+        return
+    end
+    cb(false)
+end)
+
 
 QBCore.Functions.CreateCallback('qb-civilianBilling:Server:addBill', function(source, cb, data)
     local src = source
@@ -51,7 +67,11 @@ QBCore.Functions.CreateCallback('qb-civilianBilling:Server:addBill', function(so
         cb(false)
         return
     end
-
+    if not canBill(Player.PlayerData.job.name) or not Player.PlayerData.job.onduty then
+        cb(false)
+        return
+    end
+    
     MySQL.Async.execute('INSERT INTO player_bills (citizenid, title, quantity) VALUES (@citizenid, @title, @quantity)', {
         ['@citizenid'] = data.citizenid,
         ['@title'] = data.title,

@@ -6,15 +6,11 @@
 export default {
   data() {
     return {
-      selectedPlayer: 0,
+      selectedPlayer: "",
+      title: "",
+      quantity: 100,
       players: [
-        {id: 1, first_name: "pedro", last_name: "picapiedra"},
-        {id: 2, first_name: "joakin", last_name: "picapiedra"},
-        {id: 3, first_name: "pedro", last_name: "picapiedra"},
-        {id: 4, first_name: "joakin", last_name: "picapiedra"},
-        {id: 5, first_name: "pedro", last_name: "picapiedra"},
-        {id: 6, first_name: "joakin", last_name: "picapiedra"},
-        {id: 7, first_name: "pedro", last_name: "picapiedra"},
+        //{citizenid: 1, first_name: "pedro", last_name: "picapiedra"},
       ]
     };
   },
@@ -23,9 +19,38 @@ export default {
   },
   methods: {
     sendBill() {
-      //POST SEND BILL
-      this.$emit('exit');
+      if (this.title != "" && this.selectedPlayer != "") {
+        fetch(`https://${GetParentResourceName()}/newBill`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json; charset=UTF-8',
+          },
+          body: JSON.stringify({
+            user_id: this.user,
+            citizenid: this.selectedPlayer,
+            title: this.title,
+            quantity: this.quantity + "",
+            
+          })
+        });
+        this.$emit('exit');
+      }
     }
+  },
+  async mounted() {
+    await fetch(`https://${GetParentResourceName()}/getPlayersNearby`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+      body: JSON.stringify({
+        citizenid: this.user
+      })
+    })
+    .then(response => response.json())
+    .then(data => {
+      this.players = data;
+    });
   }
 }
 </script>
@@ -33,19 +58,19 @@ export default {
 <template>
   <div class="bills_container">
     <label for="title">Title:</label>
-    <input id="title" type="text">
+    <input v-model="title" id="title" type="text">
     <br>
     <label for="quantity">Quantity:</label>
-    <input id="quantity" type="number">
+    <input v-model="quantity" id="quantity" type="number">
     <br>
     <br>
     <label>People near:</label>
     <div class="near_people_container">
       <div class="playerFor" v-for="player in players">
-        <div v-if="selectedPlayer != 0 && selectedPlayer == player.id" class="people_box selected">
+        <div v-if="selectedPlayer != 0 && selectedPlayer == player.citizenid" class="people_box selected">
           <i class="ph-bold ph-user"></i>{{ player.first_name + " " + player.last_name }}
         </div>
-        <div @click="selectedPlayer = player.id" v-else class="people_box">
+        <div @click="selectedPlayer = player.citizenid" v-else class="people_box">
           <i class="ph-bold ph-user"></i>{{ player.first_name + " " + player.last_name }}
         </div>
       </div>
